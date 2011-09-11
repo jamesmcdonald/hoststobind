@@ -23,6 +23,7 @@
 
 import sys
 import os
+import socket
 
 forward = {}
 reverse = {}
@@ -89,8 +90,8 @@ for network in reverse:
 for domain in forward:
     w = open(domain, "w")
     w.write(ZONEHEADER % (domain))
-    # This does a pretty stupid string-based sort by address. Better than nothing.
-    for entry in sorted(forward[domain].items(), lambda x,y: -1 if x[1]<y[1] else 1):
+    for entry in sorted(forward[domain].items(),
+        lambda x,y: -1 if socket.inet_aton(x[1])<socket.inet_aton(y[1]) else 1):
         # Use a 32 character hostname field. If your have silly hostnames, your output may suck.
         w.write("%-31s IN\tA\t%s\n" % (entry[0], entry[1]))
     w.close()
