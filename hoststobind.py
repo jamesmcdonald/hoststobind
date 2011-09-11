@@ -19,6 +19,7 @@
 
 # This is not very clever - junk in the hosts file will generate junk output
 # I wrote it on a plane to solve a specific issue
+# It explicitly ignores IPv6 entries (anything with a :)
 
 import sys
 
@@ -31,8 +32,8 @@ if len(sys.argv) < 2:
     
 hosts = open(sys.argv[1], "rb")
 for line in hosts:
-    # Skip local and comments
-    if 'localhost' in line or line.startswith('#'): continue
+    # Skip local, IPv6 and comments
+    if 'localhost' in line or ':' in line or line.startswith('#'): continue
     cooked = line.strip().split()
     if len(cooked) == 0:
         continue
