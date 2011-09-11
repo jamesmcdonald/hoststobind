@@ -45,7 +45,7 @@ for line in hosts:
     network = "%d.%d.%d.in-addr.arpa" % (ip[2],ip[1],ip[0])
     if network not in reverse:
         reverse[network] = {}
-        print "Added reverse %s" % network
+        #print "Added reverse %s" % network
     reverse[network][ip[3]] = cooked[1]
 
     # Add a forward to the IP for each host
@@ -55,7 +55,7 @@ for line in hosts:
         (hostname, domainname) = host.split('.',1)
         if domainname not in forward:
             forward[domainname] = {}
-            print "Added forward %s" % domainname
+            #print "Added forward %s" % domainname
         forward[domainname][hostname] = cooked[0]
 
 # A generic SOA with 5 minute TTL. This will need to be edited for real Internet use.
