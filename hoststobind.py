@@ -22,15 +22,17 @@
 # It explicitly ignores IPv6 entries (anything with a :)
 
 import sys
+import os
 
 forward = {}
 reverse = {}
+outputdir = "bindconf"
 
 if len(sys.argv) < 2:
     print "Usage: %s <hostsfile>" % sys.argv[0]
     exit(1)
     
-hosts = open(sys.argv[1], "rb")
+hosts = open(sys.argv[1], "r")
 for line in hosts:
     # Skip local, IPv6 and comments
     if 'localhost' in line or ':' in line or line.startswith('#'): continue
@@ -57,7 +59,8 @@ for line in hosts:
         forward[domainname][hostname] = cooked[0]
 
 # A generic SOA with 5 minute TTL. This will need to be edited for real Internet use.
-ZONEHEADER = """$TTL 300
+ZONEHEADER = """; generated zone file - please check manually before Internet DNS use
+$TTL 300
 $ORIGIN %s.
 @\t\tIN\tSOA\t @ root (
 \t\t\t\t42\t; serial
@@ -68,6 +71,10 @@ $ORIGIN %s.
 )
 
 """
+
+if not os.path.isdir(outputdir):
+    os.makedirs(outputdir, mode=0755)
+os.chdir(outputdir)
 
 z = open("named.zones", "w")
 
