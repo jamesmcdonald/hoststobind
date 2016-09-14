@@ -21,6 +21,8 @@
 # I wrote it on a plane to solve a specific issue
 # It explicitly ignores IPv6 entries (anything with a :)
 
+from __future__ import print_function
+
 import sys
 import os
 import socket
@@ -45,7 +47,7 @@ def hoststobind():
     outputdir = "bindconf"
 
     if len(sys.argv) < 2:
-        print "Usage: %s <hostsfile>" % sys.argv[0]
+        print("Usage: {0} <hostsfile>".format(sys.argv[0]), file=sys.stderr)
         exit(1)
         
     hosts = open(sys.argv[1], "r")
