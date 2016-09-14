@@ -25,40 +25,6 @@ import sys
 import os
 import socket
 
-forward = {}
-reverse = {}
-outputdir = "bindconf"
-
-if len(sys.argv) < 2:
-    print "Usage: %s <hostsfile>" % sys.argv[0]
-    exit(1)
-    
-hosts = open(sys.argv[1], "r")
-for line in hosts:
-    # Skip local, IPv6 and comments
-    if 'localhost' in line or ':' in line or line.startswith('#'): continue
-    cooked = line.strip().split()
-    if len(cooked) == 0:
-        continue
-    
-    # Set reverse to first name on line
-    ip = [int(x) for x in cooked[0].split('.')]
-    network = "%d.%d.%d.in-addr.arpa" % (ip[2],ip[1],ip[0])
-    if network not in reverse:
-        reverse[network] = {}
-        #print "Added reverse %s" % network
-    reverse[network][ip[3]] = cooked[1]
-
-    # Add a forward to the IP for each host
-    for host in cooked[1:]:
-        # Skip bare names
-        if '.' not in host: continue
-        (hostname, domainname) = host.split('.',1)
-        if domainname not in forward:
-            forward[domainname] = {}
-            #print "Added forward %s" % domainname
-        forward[domainname][hostname] = cooked[0]
-
 # A generic SOA with 5 minute TTL. This will need to be edited for real Internet use.
 ZONEHEADER = """; generated zone file - please check manually before Internet DNS use
 $TTL 300
@@ -73,28 +39,66 @@ $ORIGIN %s.
 
 """
 
-if not os.path.isdir(outputdir):
-    os.makedirs(outputdir, mode=0755)
-os.chdir(outputdir)
+def hoststobind():
+    forward = {}
+    reverse = {}
+    outputdir = "bindconf"
 
-z = open("named.zones", "w")
+    if len(sys.argv) < 2:
+        print "Usage: %s <hostsfile>" % sys.argv[0]
+        exit(1)
+        
+    hosts = open(sys.argv[1], "r")
+    for line in hosts:
+        # Skip local, IPv6 and comments
+        if 'localhost' in line or ':' in line or line.startswith('#'): continue
+        cooked = line.strip().split()
+        if len(cooked) == 0:
+            continue
+        
+        # Set reverse to first name on line
+        ip = [int(x) for x in cooked[0].split('.')]
+        network = "%d.%d.%d.in-addr.arpa" % (ip[2],ip[1],ip[0])
+        if network not in reverse:
+            reverse[network] = {}
+            #print "Added reverse %s" % network
+        reverse[network][ip[3]] = cooked[1]
 
-for network in reverse:
-    w = open(network, "w")
-    w.write(ZONEHEADER % (network))
-    for host in sorted(reverse[network]):
-        w.write("%d\t\tIN\tPTR\t%s.\n" % (host, reverse[network][host]))
-    w.close()
-    z.write("zone \"%s\" { type master; file \"%s\"; };\n" % (network, network));
+        # Add a forward to the IP for each host
+        for host in cooked[1:]:
+            # Skip bare names
+            if '.' not in host: continue
+            (hostname, domainname) = host.split('.',1)
+            if domainname not in forward:
+                forward[domainname] = {}
+                #print "Added forward %s" % domainname
+            forward[domainname][hostname] = cooked[0]
 
-for domain in forward:
-    w = open(domain, "w")
-    w.write(ZONEHEADER % (domain))
-    for entry in sorted(forward[domain].items(),
-        lambda x,y: -1 if socket.inet_aton(x[1])<socket.inet_aton(y[1]) else 1):
-        # Use a 32 character hostname field. If your have silly hostnames, your output may suck.
-        w.write("%-31s IN\tA\t%s\n" % (entry[0], entry[1]))
-    w.close()
-    z.write("zone \"%s\" { type master; file \"%s\"; };\n" % (domain, domain));
+    if not os.path.isdir(outputdir):
+        os.makedirs(outputdir, mode=0755)
+    os.chdir(outputdir)
 
-z.close()
+    z = open("named.zones", "w")
+
+    for network in reverse:
+        w = open(network, "w")
+        w.write(ZONEHEADER % (network))
+        for host in sorted(reverse[network]):
+            w.write("%d\t\tIN\tPTR\t%s.\n" % (host, reverse[network][host]))
+        w.close()
+        z.write("zone \"%s\" { type master; file \"%s\"; };\n" % (network, network));
+
+    for domain in forward:
+        w = open(domain, "w")
+        w.write(ZONEHEADER % (domain))
+        for entry in sorted(forward[domain].items(),
+            lambda x,y: -1 if socket.inet_aton(x[1])<socket.inet_aton(y[1]) else 1):
+            # Use a 32 character hostname field. If your have silly hostnames, your output may suck.
+            w.write("%-31s IN\tA\t%s\n" % (entry[0], entry[1]))
+        w.close()
+        z.write("zone \"%s\" { type master; file \"%s\"; };\n" % (domain, domain));
+
+    z.close()
+
+if __name__=='__main__':
+    hoststobind()
