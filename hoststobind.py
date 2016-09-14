@@ -23,9 +23,9 @@
 
 from __future__ import print_function
 
-import sys
 import os
 import socket
+import argparse
 
 # A generic SOA with 5 minute TTL. This will need to be edited for real Internet use.
 ZONEHEADER = """; generated zone file - please check manually before Internet DNS use
@@ -41,16 +41,11 @@ $ORIGIN %s.
 
 """
 
-def hoststobind(verbose = False):
+def hoststobind(hostsfile, outputdir='bindconf', verbose = False):
     forward = {}
     reverse = {}
-    outputdir = "bindconf"
 
-    if len(sys.argv) < 2:
-        print("Usage: {0} <hostsfile>".format(sys.argv[0]), file=sys.stderr)
-        exit(1)
-        
-    hosts = open(sys.argv[1], "r")
+    hosts = open(hostsfile, "r")
     for line in hosts:
         # Skip local, IPv6 and comments
         if 'localhost' in line or ':' in line or line.startswith('#'): continue
@@ -105,4 +100,10 @@ def hoststobind(verbose = False):
     z.close()
 
 if __name__=='__main__':
-    hoststobind()
+    parser = argparse.ArgumentParser(description="Convert hosts file to bind zone files.")
+    parser.add_argument('hosts_file', help='the hosts file to convert')
+    parser.add_argument('-v', '--verbose', action='store_true', help='show some verbose output')
+    parser.add_argument('-o', '--output', default='bindconf', help='directory for output (will be created)')
+    args = parser.parse_args()
+    print(args)
+    hoststobind(args.hosts_file, outputdir=args.output, verbose=args.verbose)
