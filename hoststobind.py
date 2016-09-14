@@ -41,7 +41,7 @@ $ORIGIN %s.
 
 """
 
-def hoststobind():
+def hoststobind(verbose = False):
     forward = {}
     reverse = {}
     outputdir = "bindconf"
@@ -63,7 +63,8 @@ def hoststobind():
         network = "%d.%d.%d.in-addr.arpa" % (ip[2],ip[1],ip[0])
         if network not in reverse:
             reverse[network] = {}
-            #print "Added reverse %s" % network
+            if verbose:
+                print("Added reverse {0}".format(network))
         reverse[network][ip[3]] = cooked[1]
 
         # Add a forward to the IP for each host
@@ -73,7 +74,8 @@ def hoststobind():
             (hostname, domainname) = host.split('.',1)
             if domainname not in forward:
                 forward[domainname] = {}
-                #print "Added forward %s" % domainname
+                if verbose:
+                    print("Added forward {0}".format(domainname))
             forward[domainname][hostname] = cooked[0]
 
     if not os.path.isdir(outputdir):
