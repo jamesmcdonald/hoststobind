@@ -113,7 +113,7 @@ if __name__=='__main__':
     parser = argparse.ArgumentParser(description="Convert hosts file to bind zone files.")
     parser.add_argument('hosts_file', help='the hosts file to convert')
     parser.add_argument('-v', '--verbose', action='store_true', help='show some verbose output')
-    parser.add_argument('-o', '--output', default='bindconf', help='directory for output (will be created)')
+    parser.add_argument('-o', '--output', default='bindconf', help='directory for output (default: %(default)s)')
     args = parser.parse_args()
     print(args)
     hoststobind(args.hosts_file, outputdir=args.output, verbose=args.verbose)
