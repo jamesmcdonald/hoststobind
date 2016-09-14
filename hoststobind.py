@@ -76,18 +76,26 @@ def hoststobind(hostsfile, outputdir='bindconf', verbose = False):
     if not os.path.isdir(outputdir):
         os.makedirs(outputdir, mode=0755)
     os.chdir(outputdir)
+    if verbose:
+        print("Creating output in {}".format(os.getcwd()))
 
     z = open("named.zones", "w")
 
     for network in reverse:
+        if verbose:
+            print("Writing file {}...".format(network), end='')
         w = open(network, "w")
         w.write(ZONEHEADER % (network))
         for host in sorted(reverse[network]):
             w.write("%d\t\tIN\tPTR\t%s.\n" % (host, reverse[network][host]))
         w.close()
         z.write("zone \"%s\" { type master; file \"%s\"; };\n" % (network, network));
+        if verbose:
+            print("done")
 
     for domain in forward:
+        if verbose:
+            print("Writing file {}...".format(domain), end='')
         w = open(domain, "w")
         w.write(ZONEHEADER % (domain))
         for entry in sorted(forward[domain].items(),
@@ -96,6 +104,8 @@ def hoststobind(hostsfile, outputdir='bindconf', verbose = False):
             w.write("%-31s IN\tA\t%s\n" % (entry[0], entry[1]))
         w.close()
         z.write("zone \"%s\" { type master; file \"%s\"; };\n" % (domain, domain));
+        if verbose:
+            print("done")
 
     z.close()
 
